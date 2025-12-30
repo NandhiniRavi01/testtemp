@@ -4,9 +4,10 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (for pandas/numpy etc.)
+# Install system dependencies (for pandas/numpy etc.) + curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
