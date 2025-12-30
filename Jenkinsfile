@@ -20,21 +20,25 @@ pipeline {
         stage('Verify Docker & Compose') {
             steps {
                 sh 'docker --version'
-                sh 'docker-compose --version'
+                sh 'docker compose version'
             }
         }
 
         stage('Build Images') {
             steps {
-                echo '🐳 Building Docker images using docker-compose'
-                sh 'docker-compose build'
+                dir('email-main') {
+                    echo '🐳 Building Docker images using docker compose'
+                    sh 'docker compose build'
+                }
             }
         }
 
         stage('Run Containers') {
             steps {
-                echo '🚀 Starting application containers'
-                sh 'docker-compose up -d'
+                dir('email-main') {
+                    echo '🚀 Starting application containers'
+                    sh 'docker compose up -d'
+                }
             }
         }
 
@@ -63,8 +67,10 @@ pipeline {
 
         stage('Cleanup Containers') {
             steps {
-                echo '🧹 Stopping containers'
-                sh 'docker-compose down'
+                dir('email-main') {
+                    echo '🧹 Stopping containers'
+                    sh 'docker compose down'
+                }
             }
         }
     }
@@ -82,4 +88,3 @@ pipeline {
         }
     }
 }
-
