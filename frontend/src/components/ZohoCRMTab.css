@@ -1,0 +1,423 @@
+/* Zoho CRM Styles */
+.zoho-card {
+  grid-column: 1 / -1;
+}
+
+.zoho-status {
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.zoho-connected {
+  background: #f0f9ff;
+  color: #000000;
+  border: 1px solid #bae6fd;
+}
+
+.zoho-disconnected {
+  background: #fef2f2;
+  color: #000000;
+  border: 1px solid #fecaca;
+}
+
+/* Section Title Styles for Zoho Tab */
+.zoho-card .section-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  margin-bottom: 20px !important;
+  padding: 8px 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Colorful Section Icons for Zoho Tab */
+.zoho-card .section-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+}
+
+/* Zoho Reply Item Styles */
+.zoho-reply-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  background: #f8fafc;
+}
+
+.zoho-reply-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.zoho-reply-from {
+  font-weight: 600;
+  color: #000000;
+  font-size: 1rem;
+}
+
+.zoho-reply-date {
+  color: #000000;
+  font-size: 0.9rem;
+}
+
+.zoho-reply-subject {
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.zoho-reply-body {
+  color: #000000;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+}
+
+.zoho-reply-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-generate-reply {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.25);
+}
+
+.btn-generate-reply:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(56, 189, 248, 0.35);
+}
+
+.btn-connect {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.25);
+}
+
+.btn-connect:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(56, 189, 248, 0.35);
+}
+
+.btn-refresh {
+  background: #f1f5f9;
+  color: #000000;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-download {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.25);
+}
+
+.btn-download:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(56, 189, 248, 0.35);
+}
+
+/* Connection Status Styles */
+.connection-status {
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connection-connected {
+  background: #f0f9ff;
+  color: #000000;
+  border: 1px solid #bae6fd;
+}
+
+.connection-disconnected {
+  background: #fef2f2;
+  color: #000000;
+  border: 1px solid #fecaca;
+}
+
+.connection-testing {
+  background: #fffbeb;
+  color: #000000;
+  border: 1px solid #fed7aa;
+}
+
+.connection-error {
+  background: #fef2f2;
+  color: #000000;
+  border: 1px solid #fecaca;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.connection-connected .status-indicator {
+  background: #38bdf8;
+}
+
+.connection-disconnected .status-indicator {
+  background: #dc2626;
+}
+
+.connection-testing .status-indicator {
+  background: #d97706;
+}
+
+.connection-error .status-indicator {
+  background: #dc2626;
+}
+
+.status-text {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #000000;
+}
+
+.status-message {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  color: #000000;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 25px 15px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.modal-close {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #000000;
+}
+
+.modal-close:hover {
+  background: #e2e8f0;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.modal-footer {
+  padding: 15px 25px 25px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Utility styles for Zoho tab */
+.zoho-card .content-field {
+  margin-bottom: 15px;
+}
+
+.zoho-card .content-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #000000;
+  font-size: 0.95rem;
+}
+
+.zoho-card .content-input, 
+.zoho-card .content-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+  color: #000000;
+}
+
+.zoho-card .content-input:focus, 
+.zoho-card .content-textarea:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.zoho-card .content-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.zoho-card .content-display {
+  padding: 12px 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+  min-height: 44px;
+  color: #000000;
+  font-size: 1rem;
+}
+
+.zoho-card .body-display {
+  min-height: 120px;
+  white-space: pre-wrap;
+}
+
+.zoho-card .controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.zoho-card .button-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Buttons for Zoho tab */
+.zoho-card .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.zoho-card .btn-primary {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.25);
+}
+
+.zoho-card .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(56, 189, 248, 0.35);
+}
+
+.zoho-card .btn-secondary {
+  background: #f1f5f9;
+  color: #000000;
+  border: 1px solid #e2e8f0;
+}
+
+.zoho-card .btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.zoho-card .btn-clear {
+  background: #fef2f2;
+  color: #000000;
+  border: 1px solid #fecaca;
+}
+
+.zoho-card .btn-clear:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.zoho-card .btn-send {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.25);
+  padding: 12px 18px;
+}
+
+.zoho-card .btn-send:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(56, 189, 248, 0.35);
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
