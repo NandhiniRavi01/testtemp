@@ -2,6 +2,9 @@ pipeline {
     agent any
 
     environment {
+          // Remote Docker host
+        DOCKER_HOST = "tcp://3.81.14.177:2375"
+        DOCKER_BUILDKIT = "1"
         COMPOSE_PROJECT_NAME = "email-app"
         BACKEND_CONTAINER = "email-backend"
         FRONTEND_CONTAINER = "frontend-app"
