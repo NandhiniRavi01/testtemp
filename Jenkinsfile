@@ -51,7 +51,7 @@ pipeline {
                 retry(5) {
                     sleep 5
                     // Host-based curl test (requires backend port 5000 mapped to host)
-                    sh 'curl -f http://localhost:5000 || exit 1'
+                    sh 'curl -f http://3.81.14.177:5000 || exit 1'
                 }
             }
         }
@@ -59,10 +59,10 @@ pipeline {
         stage('Test Services') {
             steps {
                 echo '🧪 Testing Backend API'
-                sh 'curl --fail http://localhost:5000'
+                sh 'curl --fail http://3.81.14.177:5000'
 
                 echo '🧪 Testing Frontend UI'
-                sh 'curl --fail http://localhost'
+                sh 'curl --fail http://3.81.14.177'
             }
         }
 
