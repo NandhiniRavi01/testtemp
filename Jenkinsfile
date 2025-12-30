@@ -47,10 +47,8 @@ pipeline {
                 echo '⏳ Waiting for backend to be ready'
                 retry(5) {
                     sleep 5
-                    sh '''
-                        docker exec ${BACKEND_CONTAINER} \
-                        curl -f http://localhost:5000 || exit 1
-                    '''
+                    // Host-based curl test (requires backend port 5000 mapped to host)
+                    sh 'curl -f http://localhost:5000 || exit 1'
                 }
             }
         }
@@ -65,19 +63,20 @@ pipeline {
             }
         }
 
-        stage('Cleanup Containers') {
-            steps {
-                dir('email-main') {
-                    echo '🧹 Stopping containers'
-                    sh 'docker compose down'
-                }
-            }
-        }
+        // Cleanup stage removed to keep containers running after pipeline
+        // stage('Cleanup Containers') {
+        //     steps {
+        //         dir('email-main') {
+        //             echo '🧹 Stopping containers'
+        //             sh 'docker compose down'
+        //         }
+        //     }
+        // }
     }
 
     post {
         always {
-            echo '🧽 Pruning unused Docker resources'
+            echo '🧽 Pruning unused Docker resources (images & cache only)'
             sh 'docker system prune -af || true'
         }
         success {
