@@ -13,10 +13,7 @@ pipeline {
         VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
-    options {
-        timestamps()
-        timeout(time: 20, unit: 'MINUTES')
-    }
+   
 
     stages {
 
