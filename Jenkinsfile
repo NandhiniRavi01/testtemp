@@ -9,7 +9,7 @@ pipeline {
         PATH = "/usr/local/bin:${env.PATH}"
 
         VM_USER = "ubuntu"
-        VM_HOST = "3.81.14.177"
+        VM_HOST = "54.80.134.161"
         APP_DIR = "~/email-main"
     }
 
