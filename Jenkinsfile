@@ -13,22 +13,21 @@ pipeline {
         VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
-   
+    options {
+        timestamps()
+        timeout(time: 20, unit: 'MINUTES')
+    }
 
     stages {
 
-        /* ---------------------------------------------------------
-         * 1. CHECKOUT CODE IN JENKINS (FROM GITHUB)
-         * --------------------------------------------------------- */
+        // 1️⃣ Checkout Code
         stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
-        /* ---------------------------------------------------------
-         * 2. VERIFY VM SSH CONNECTIVITY
-         * --------------------------------------------------------- */
+        // 2️⃣ Test SSH Connection
         stage('Test VM SSH Connection') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -44,26 +43,22 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 3. COPY CODE FROM JENKINS → VM
-         * --------------------------------------------------------- */
+        // 3️⃣ Copy Code to VM
         stage('Copy Code to VM') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     rsync -avz --delete \
-                      --exclude='.git' \
-                      --exclude='node_modules' \
-                      --exclude='__pycache__' \
-                      ./ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
+                        --exclude='.git' \
+                        --exclude='node_modules' \
+                        --exclude='__pycache__' \
+                        ./ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
                     """
                 }
             }
         }
 
-        /* ---------------------------------------------------------
-         * 4. VERIFY DOCKER & COMPOSE ON VM
-         * --------------------------------------------------------- */
+        // 4️⃣ Verify Docker & Compose
         stage('Verify Docker & Compose') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -77,9 +72,7 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 5. BUILD & RUN DOCKER IMAGES
-         * --------------------------------------------------------- */
+        // 5️⃣ Build & Run Containers
         stage('Build & Run Containers') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -94,9 +87,7 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 6. WAIT FOR BACKEND
-         * --------------------------------------------------------- */
+        // 6️⃣ Wait for Backend
         stage('Wait for Backend') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -112,29 +103,27 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 7. TEST SERVICES
-         * --------------------------------------------------------- */
+        // 7️⃣ Test Services in Parallel
         stage('Test Services') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "🔍 Backend test"
-                        curl --fail --max-time 5 http://${VM_HOST}:5000
-
-                        echo "🔍 Frontend test"
-                        curl --fail --max-time 5 http://${VM_HOST}
-                    '
-                    """
+            parallel {
+                stage('Backend Test') {
+                    steps {
+                        sshagent(['aws-email-vm-ssh']) {
+                            sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail --max-time 5 http://${VM_HOST}:5000'"
+                        }
+                    }
+                }
+                stage('Frontend Test') {
+                    steps {
+                        sshagent(['aws-email-vm-ssh']) {
+                            sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail --max-time 5 http://${VM_HOST}'"
+                        }
+                    }
                 }
             }
         }
     }
 
-    /* -------------------------------------------------------------
-     * POST ACTIONS
-     * ------------------------------------------------------------- */
     post {
         always {
             sshagent(['aws-email-vm-ssh']) {
