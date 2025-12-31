@@ -37,7 +37,7 @@ pipeline {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "✅ SSH OK"
+                        echo "✅ SSH Connection OK"
                         hostname
                         whoami
                         uptime
