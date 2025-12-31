@@ -34,7 +34,7 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Test VM SSH Connection') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         echo "✅ SSH OK"
@@ -52,7 +52,7 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Copy Code to VM') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     rsync -avz --delete \
                       --exclude='.git' \
@@ -69,7 +69,7 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Verify Docker & Compose on VM') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         docker --version
@@ -85,7 +85,7 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Build Images on VM') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
@@ -101,7 +101,7 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Run Containers on VM') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
@@ -117,11 +117,11 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Wait for Backend') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     retry(5) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                            curl -f http://localhost:5000
+                            curl -f http://54.80.134.161:5000
                         '
                         """
                         sleep 5
@@ -135,14 +135,14 @@ pipeline {
          * --------------------------------------------------------- */
         stage('Test Services') {
             steps {
-                sshagent(['docker-vm-ssh']) {
+                sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         echo "🔍 Backend test"
-                        curl --fail http://localhost:5000
+                        curl --fail http://54.80.134.161:5000
 
                         echo "🔍 Frontend test"
-                        curl --fail http://localhost
+                        curl --fail http://54.80.134.161
                     '
                     """
                 }
@@ -155,7 +155,7 @@ pipeline {
      * ------------------------------------------------------------- */
     post {
         always {
-            sshagent(['docker-vm-ssh']) {
+            sshagent(['aws-email-vm-ssh']) {
                 sh """
                 ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                     docker system prune -af || true
