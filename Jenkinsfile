@@ -11,6 +11,8 @@ pipeline {
         VM_USER = "ubuntu"
         VM_HOST = "54.80.134.161"
         VM_APP_DIR = "/home/ubuntu/email-main"
+        
+        GIT_REPO = "https://github.com/NandhiniRavi01/testtemp.git"
     }
 
     options {
