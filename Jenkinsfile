@@ -7,7 +7,7 @@ pipeline {
         FRONTEND_CONTAINER   = "frontend-app"
 
         VM_USER = "ubuntu"
-        VM_HOST = "54.80.134.161"
+        VM_HOST = "13.221.38.3"
         VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
