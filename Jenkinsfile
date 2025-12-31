@@ -10,7 +10,7 @@ pipeline {
 
         VM_USER = "ubuntu"
         VM_HOST = "54.80.134.161"
-        APP_DIR = "~/email-main"
+        VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
     options {
@@ -21,17 +21,26 @@ pipeline {
     stages {
 
         /* ---------------------------------------------------------
-         * 1. VERIFY VM CONNECTIVITY (MOST IMPORTANT STAGE)
+         * 1. CHECKOUT CODE IN JENKINS (FROM GITHUB)
+         * --------------------------------------------------------- */
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        /* ---------------------------------------------------------
+         * 2. VERIFY VM SSH CONNECTIVITY
          * --------------------------------------------------------- */
         stage('Test VM SSH Connection') {
             steps {
                 sshagent(['docker-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "✅ SSH connection successful"
-                        echo "Host:" && hostname
-                        echo "User:" && whoami
-                        echo "Uptime:" && uptime
+                        echo "✅ SSH OK"
+                        hostname
+                        whoami
+                        uptime
                     '
                     """
                 }
@@ -39,30 +48,24 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 2. CHECKOUT CODE ON VM
+         * 3. COPY CODE FROM JENKINS → VM
          * --------------------------------------------------------- */
-        stage('Checkout Code on VM') {
+        stage('Copy Code to VM') {
             steps {
                 sshagent(['docker-vm-ssh']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        mkdir -p ${APP_DIR}
-
-                        if [ -d ${APP_DIR}/.git ]; then
-                            cd ${APP_DIR}
-                            git reset --hard
-                            git pull origin main
-                        else
-                            git clone -b main https://github.com/NandhiniRavi01/test.git ${APP_DIR}
-                        fi
-                    '
+                    rsync -avz --delete \
+                      --exclude='.git' \
+                      --exclude='node_modules' \
+                      --exclude='__pycache__' \
+                      ./ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
                     """
                 }
             }
         }
 
         /* ---------------------------------------------------------
-         * 3. VERIFY DOCKER & COMPOSE
+         * 4. VERIFY DOCKER & COMPOSE
          * --------------------------------------------------------- */
         stage('Verify Docker & Compose on VM') {
             steps {
@@ -78,14 +81,14 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 4. BUILD DOCKER IMAGES
+         * 5. BUILD DOCKER IMAGES
          * --------------------------------------------------------- */
         stage('Build Images on VM') {
             steps {
                 sshagent(['docker-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        cd ${APP_DIR}
+                        cd ${VM_APP_DIR}
                         docker compose build
                     '
                     """
@@ -94,14 +97,14 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 5. RUN CONTAINERS
+         * 6. RUN CONTAINERS
          * --------------------------------------------------------- */
         stage('Run Containers on VM') {
             steps {
                 sshagent(['docker-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        cd ${APP_DIR}
+                        cd ${VM_APP_DIR}
                         docker compose up -d
                     '
                     """
@@ -110,7 +113,7 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 6. WAIT FOR BACKEND TO BE READY
+         * 7. WAIT FOR BACKEND
          * --------------------------------------------------------- */
         stage('Wait for Backend') {
             steps {
@@ -128,17 +131,17 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 7. TEST FRONTEND & BACKEND
+         * 8. TEST SERVICES
          * --------------------------------------------------------- */
         stage('Test Services') {
             steps {
                 sshagent(['docker-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "🔍 Testing backend..."
+                        echo "🔍 Backend test"
                         curl --fail http://localhost:5000
 
-                        echo "🔍 Testing frontend..."
+                        echo "🔍 Frontend test"
                         curl --fail http://localhost
                     '
                     """
@@ -162,11 +165,11 @@ pipeline {
         }
 
         success {
-            echo '✅ Frontend & Backend successfully deployed and verified on VM'
+            echo '✅ Deployment successful (Jenkins → VM)'
         }
 
         failure {
-            echo '❌ Pipeline failed – please check Jenkins logs'
+            echo '❌ Deployment failed – check logs'
         }
     }
 }
