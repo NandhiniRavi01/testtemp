@@ -65,15 +65,15 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 4. VERIFY DOCKER & COMPOSE
+         * 4. VERIFY DOCKER & COMPOSE ON VM
          * --------------------------------------------------------- */
-        stage('Verify Docker & Compose on VM') {
+        stage('Verify Docker & Compose') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         docker --version
-                        docker compose version
+                        docker compose version || docker-compose --version
                     '
                     """
                 }
@@ -81,30 +81,15 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 5. BUILD DOCKER IMAGES
+         * 5. BUILD & RUN DOCKER IMAGES
          * --------------------------------------------------------- */
-        stage('Build Images on VM') {
+        stage('Build & Run Containers') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
                         docker compose build
-                    '
-                    """
-                }
-            }
-        }
-
-        /* ---------------------------------------------------------
-         * 6. RUN CONTAINERS
-         * --------------------------------------------------------- */
-        stage('Run Containers on VM') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        cd ${VM_APP_DIR}
                         docker compose up -d
                     '
                     """
@@ -113,7 +98,7 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 7. WAIT FOR BACKEND
+         * 6. WAIT FOR BACKEND
          * --------------------------------------------------------- */
         stage('Wait for Backend') {
             steps {
@@ -121,7 +106,7 @@ pipeline {
                     retry(5) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                            curl -f http://54.80.134.161:5000
+                            curl --fail --max-time 5 http://${VM_HOST}:5000
                         '
                         """
                         sleep 5
@@ -131,7 +116,7 @@ pipeline {
         }
 
         /* ---------------------------------------------------------
-         * 8. TEST SERVICES
+         * 7. TEST SERVICES
          * --------------------------------------------------------- */
         stage('Test Services') {
             steps {
@@ -139,10 +124,10 @@ pipeline {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         echo "🔍 Backend test"
-                        curl --fail http://54.80.134.161:5000
+                        curl --fail --max-time 5 http://${VM_HOST}:5000
 
                         echo "🔍 Frontend test"
-                        curl --fail http://54.80.134.161
+                        curl --fail --max-time 5 http://${VM_HOST}
                     '
                     """
                 }
