@@ -2,20 +2,34 @@ pipeline {
     agent any
 
     environment {
-        VM_USER    = "ubuntu"
-        VM_HOST    = "54.80.134.161"
+        COMPOSE_PROJECT_NAME = "email-app"
+        BACKEND_CONTAINER   = "email-backend"
+        FRONTEND_CONTAINER  = "frontend-app"
+
+        PATH = "/usr/local/bin:${env.PATH}"
+
+        VM_USER = "ubuntu"
+        VM_HOST = "54.80.134.161"
         VM_APP_DIR = "/home/ubuntu/email-main"
-        GIT_REPO   = "https://github.com/NandhiniRavi01/testtemp.git"
+        
+        GIT_REPO = "https://github.com/NandhiniRavi01/testtemp.git"
     }
 
     options {
         timestamps()
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 20, unit: 'MINUTES')
     }
 
     stages {
 
-        // 1️⃣ Test SSH Connection
+        // 1️⃣ Checkout Code
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // 2️⃣ Test SSH Connection
         stage('Test VM SSH Connection') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -31,28 +45,23 @@ pipeline {
             }
         }
 
-        // 2️⃣ Deploy Code on VM (Clone or Pull)
-        stage('Deploy Code on VM') {
+        // 3️⃣ Copy Code to VM
+        stage('Copy Code to VM') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        mkdir -p ${VM_APP_DIR}
-
-                        # Clone or update repo
-                        if [ -d ${VM_APP_DIR}/.git ]; then
-                            cd ${VM_APP_DIR} && git reset --hard && git pull
-                        else
-                            git clone ${GIT_REPO} ${VM_APP_DIR}
-                        fi
-                    '
+                    rsync -avz --delete \
+                        --exclude='.git' \
+                        --exclude='node_modules' \
+                        --exclude='__pycache__' \
+                        ./ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
                     """
                 }
             }
         }
 
-        // 3️⃣ Verify Docker & Compose
-        stage('Verify Docker & Compose on VM') {
+        // 4️⃣ Verify Docker & Compose
+        stage('Verify Docker & Compose') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
@@ -65,8 +74,8 @@ pipeline {
             }
         }
 
-        // 4️⃣ Build & Run Containers
-        stage('Build & Run Docker Compose') {
+        // 5️⃣ Build & Run Containers
+        stage('Build & Run Containers') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
@@ -80,14 +89,14 @@ pipeline {
             }
         }
 
-        // 5️⃣ Wait for Backend
+        // 6️⃣ Wait for Backend
         stage('Wait for Backend') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     retry(5) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                            curl --fail --max-time 5 http://localhost:5000
+                            curl --fail --max-time 5 http://${VM_HOST}:5000
                         '
                         """
                         sleep 5
@@ -96,19 +105,22 @@ pipeline {
             }
         }
 
-        // 6️⃣ Test Services
+        // 7️⃣ Test Services in Parallel
         stage('Test Services') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "🔍 Backend test"
-                        curl --fail --max-time 5 http://localhost:5000
-
-                        echo "🔍 Frontend test"
-                        curl --fail --max-time 5 http://localhost:80 || curl --fail --max-time 5 http://localhost:3000
-                    '
-                    """
+            parallel {
+                stage('Backend Test') {
+                    steps {
+                        sshagent(['aws-email-vm-ssh']) {
+                            sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail --max-time 5 http://${VM_HOST}:5000'"
+                        }
+                    }
+                }
+                stage('Frontend Test') {
+                    steps {
+                        sshagent(['aws-email-vm-ssh']) {
+                            sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail --max-time 5 http://${VM_HOST}'"
+                        }
+                    }
                 }
             }
         }
@@ -126,7 +138,7 @@ pipeline {
         }
 
         success {
-            echo '✅ Deployment successful (Frontend + Backend Docker Compose)'
+            echo '✅ Deployment successful (Jenkins → VM)'
         }
 
         failure {
