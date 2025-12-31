@@ -6,81 +6,83 @@ pipeline {
         BACKEND_CONTAINER = "email-backend"
         FRONTEND_CONTAINER = "frontend-app"
         PATH = "/usr/local/bin:${env.PATH}"
+        VM_USER = "ubuntu"
+        VM_HOST = "3.81.14.177"
+        APP_DIR = "~/email-main"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout Code on VM') {
             steps {
-                echo '📥 Checking out source code'
-                checkout scm
-            }
-        }
-
-        stage('Verify Docker & Compose') {
-            steps {
-                sh 'docker --version'
-                sh 'docker compose version'
-            }
-        }
-
-        stage('Build Images') {
-            steps {
-                dir('email-main') {
-                    echo '🐳 Building Docker images using docker compose'
-                    sh 'docker compose build'
+                sshagent(['docker-vm-ssh']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
+                        mkdir -p ${APP_DIR} &&
+                        if [ -d ${APP_DIR}/.git ]; then
+                            cd ${APP_DIR} && git pull
+                        else
+                            git clone -b main https://github.com/NandhiniRavi01/test.git ${APP_DIR}
+                        fi
+                    '
+                    """
                 }
             }
         }
 
-        stage('Run Containers') {
+        stage('Verify Docker & Compose on VM') {
             steps {
-                dir('email-main') {
-                    echo '🚀 Starting application containers'
-                    sh 'docker compose up -d'
+                sshagent(['docker-vm-ssh']) {
+                    sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'docker --version && docker compose version'"
+                }
+            }
+        }
+
+        stage('Build Images on VM') {
+            steps {
+                sshagent(['docker-vm-ssh']) {
+                    sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'cd ${APP_DIR} && docker compose build'"
+                }
+            }
+        }
+
+        stage('Run Containers on VM') {
+            steps {
+                sshagent(['docker-vm-ssh']) {
+                    sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'cd ${APP_DIR} && docker compose up -d'"
                 }
             }
         }
 
         stage('Wait for Backend') {
             steps {
-                echo '⏳ Waiting for backend to be ready'
-                retry(5) {
-                    sleep 5
-                    // Host-based curl test (requires backend port 5000 mapped to host)
-                    sh 'curl -f http://localhost:5000 || exit 1'
+                sshagent(['docker-vm-ssh']) {
+                    retry(5) {
+                        sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl -f http://${VM_HOST}:5000 || exit 1'"
+                        sleep 5
+                    }
                 }
             }
         }
 
         stage('Test Services') {
             steps {
-                echo '🧪 Testing Backend API'
-                sh 'curl --fail http://localhost:5000'
-
-                echo '🧪 Testing Frontend UI'
-                sh 'curl --fail http://localhost'
+                sshagent(['docker-vm-ssh']) {
+                    sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail http://${VM_HOST}:5000'"
+                    sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'curl --fail http://${VM_HOST}'"
+                }
             }
         }
-
-        // Cleanup stage removed to keep containers running after pipeline
-        // stage('Cleanup Containers') {
-        //     steps {
-        //         dir('email-main') {
-        //             echo '🧹 Stopping containers'
-        //             sh 'docker compose down'
-        //         }
-        //     }
-        // }
     }
 
     post {
         always {
-            echo '🧽 Pruning unused Docker resources (images & cache only)'
-            sh 'docker system prune -af || true'
+            sshagent(['docker-vm-ssh']) {
+                sh "ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'docker system prune -af || true'"
+            }
         }
         success {
-            echo '✅ Frontend & Backend deployed and tested successfully'
+            echo '✅ Frontend & Backend deployed and tested successfully on VM'
         }
         failure {
             echo '❌ Pipeline failed – check logs'
