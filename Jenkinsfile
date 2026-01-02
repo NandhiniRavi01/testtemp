@@ -24,6 +24,16 @@ pipeline {
             }
         }
 
+        stage('Clean Existing Containers') {
+            steps {
+                echo '🧹 Removing existing containers if present'
+                sh '''
+                    docker rm -f ${BACKEND_CONTAINER} || true
+                    docker rm -f ${FRONTEND_CONTAINER} || true
+                '''
+            }
+        }
+
         stage('Build Images') {
             steps {
                 echo '🐳 Building Docker images using docker-compose'
@@ -60,14 +70,13 @@ pipeline {
                 sh 'curl --fail http://localhost'
             }
         }
-
-       
     }
 
     post {
         always {
-            echo '🧽 Pruning unused Docker resources'
-            sh 'docker system prune -af || true'
+            echo '🧽 Cleaning up stopped containers and networks'
+            sh 'docker container prune -f || true'
+            sh 'docker network prune -f || true'
         }
         success {
             echo '✅ Frontend & Backend deployed and tested successfully'
