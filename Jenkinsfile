@@ -5,7 +5,7 @@ pipeline {
         COMPOSE_PROJECT_NAME = "email-app"
 
         VM_USER    = "ubuntu"
-        VM_HOST    = "13.221.38.3"
+        VM_HOST    = "18.60.40.10"
         VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
