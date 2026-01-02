@@ -22,21 +22,22 @@ pipeline {
             }
         }
 
-        stage('Test SSH Connection') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@65.1.129.37 << 'EOF'
-                      echo "✅ SSH connected"
-                      hostname
-                      whoami
-                      docker --version
-                      docker compose version
-                    EOF
-                    '''
-                }
-            }
+       stage('Test SSH Connection') {
+    steps {
+        sshagent(['aws-email-vm-ssh']) {
+            sh """
+            ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} "
+                echo '✅ SSH connected'
+                hostname
+                whoami
+                docker --version
+                docker compose version
+            "
+            """
         }
+    }
+}
+
 
         stage('Remove Old Code on VM') {
             steps {
