@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         COMPOSE_PROJECT_NAME = "email-app"
-
         VM_USER    = "ubuntu"
         VM_HOST    = "65.1.129.37"
         VM_APP_DIR = "/home/ubuntu/email-main"
@@ -16,9 +15,9 @@ pipeline {
 
     stages {
 
-        /* -----------------------------
-         * 1. Checkout Code
-         * ----------------------------- */
+        // -----------------------------
+        // 1. Checkout Code
+        // -----------------------------
         stage('Checkout Code') {
             steps {
                 echo "📥 Checking out source code"
@@ -26,9 +25,9 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 2. Test SSH Connection
-         * ----------------------------- */
+        // -----------------------------
+        // 2. Test SSH Connection
+        // -----------------------------
         stage('Test SSH Connection') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -44,9 +43,9 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 3. Remove Old Code on VM
-         * ----------------------------- */
+        // -----------------------------
+        // 3. Remove Old Code on VM
+        // -----------------------------
         stage('Remove Old Code on VM') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -61,9 +60,9 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 4. Copy Fresh Code to VM
-         * ----------------------------- */
+        // -----------------------------
+        // 4. Copy Fresh Code to VM
+        // -----------------------------
         stage('Copy Fresh Code to VM') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -78,9 +77,9 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 5. Stop & Remove Old Containers + Images
-         * ----------------------------- */
+        // -----------------------------
+        // 5. Stop & Remove Old Containers + Images
+        // -----------------------------
         stage('Cleanup Containers & Images') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -95,17 +94,20 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 6. Build & Deploy
-         * ----------------------------- */
+        // -----------------------------
+        // 6. Build & Deploy with RDS CA
+        // -----------------------------
         stage('Build & Deploy') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
-                        echo "🐳 Building fresh images"
-                        docker compose build --no-cache
+                        echo "🐳 Building fresh images (no cache)"
+                        docker compose build --no-cache backend
+
+                        echo "📄 Verifying RDS CA bundle exists inside image"
+                        docker run --rm backend ls -l /app/rds-ca.pem
 
                         echo "🚀 Starting containers"
                         docker compose up -d
@@ -115,9 +117,9 @@ pipeline {
             }
         }
 
-        /* -----------------------------
-         * 7. Verify Services
-         * ----------------------------- */
+        // -----------------------------
+        // 7. Verify Services
+        // -----------------------------
         stage('Verify Services') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
@@ -140,7 +142,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment successful (clean code + clean images)"
+            echo "✅ Deployment successful (clean code + clean images + SSL CA bundled)"
         }
 
         failure {
