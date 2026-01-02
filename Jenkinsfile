@@ -3,148 +3,77 @@ pipeline {
 
     environment {
         COMPOSE_PROJECT_NAME = "email-app"
-
-        VM_USER    = "ubuntu"
-        VM_HOST    = "18.60.40.10"
-        VM_APP_DIR = "/home/ubuntu/email-main"
-    }
-
-    options {
-        timestamps()
-        timeout(time: 30, unit: 'MINUTES')
+        BACKEND_CONTAINER = "email-backend"
+        FRONTEND_CONTAINER = "frontend-app"
+        PATH = "/usr/local/bin:${env.PATH}"
     }
 
     stages {
 
-        /* -----------------------------
-         * 1. Checkout Code
-         * ----------------------------- */
         stage('Checkout Code') {
             steps {
-                echo "📥 Checking out source code"
+                echo '📥 Checking out source code'
                 checkout scm
             }
         }
 
-        /* -----------------------------
-         * 2. Test SSH Connection
-         * ----------------------------- */
-        stage('Test SSH Connection') {
+        stage('Verify Docker & Compose') {
             steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "✅ SSH connected"
-                        hostname
-                        whoami
-                        docker --version
-                    '
-                    """
+                sh 'docker --version'
+                sh 'docker-compose --version'
+            }
+        }
+
+        stage('Build Images') {
+            steps {
+                echo '🐳 Building Docker images using docker-compose'
+                sh 'docker-compose build'
+            }
+        }
+
+        stage('Run Containers') {
+            steps {
+                echo '🚀 Starting application containers'
+                sh 'docker-compose up -d'
+            }
+        }
+
+        stage('Wait for Backend') {
+            steps {
+                echo '⏳ Waiting for backend to be ready'
+                retry(5) {
+                    sleep 5
+                    sh '''
+                        docker exec ${BACKEND_CONTAINER} \
+                        curl -f http://localhost:5000 || exit 1
+                    '''
                 }
             }
         }
 
-        /* -----------------------------
-         * 3. Remove Old Code on VM
-         * ----------------------------- */
-        stage('Remove Old Code on VM') {
+        stage('Test Services') {
             steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "🧹 Removing old application code"
-                        rm -rf ${VM_APP_DIR}
-                        mkdir -p ${VM_APP_DIR}
-                    '
-                    """
-                }
+                echo '🧪 Testing Backend API'
+                sh 'curl --fail http://localhost:5000'
+
+                echo '🧪 Testing Frontend UI'
+                sh 'curl --fail http://localhost'
             }
         }
 
-        /* -----------------------------
-         * 4. Copy Fresh Code to VM
-         * ----------------------------- */
-        stage('Copy Fresh Code to VM') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    rsync -avz \
-                        --exclude='.git' \
-                        --exclude='node_modules' \
-                        --exclude='__pycache__' \
-                        ./ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
-                    """
-                }
-            }
-        }
-
-        /* -----------------------------
-         * 5. Stop & Remove Old Containers + Images
-         * ----------------------------- */
-        stage('Cleanup Containers & Images') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        cd ${VM_APP_DIR}
-                        echo "🧹 Stopping containers and removing images"
-                        docker compose down --rmi all --volumes --remove-orphans || true
-                    '
-                    """
-                }
-            }
-        }
-
-        /* -----------------------------
-         * 6. Build & Deploy
-         * ----------------------------- */
-        stage('Build & Deploy') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        cd ${VM_APP_DIR}
-                        echo "🐳 Building fresh images"
-                        docker compose build --no-cache
-
-                        echo "🚀 Starting containers"
-                        docker compose up -d
-                    '
-                    """
-                }
-            }
-        }
-
-        /* -----------------------------
-         * 7. Verify Services
-         * ----------------------------- */
-        stage('Verify Services') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    retry(5) {
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                            echo "🔍 Backend check"
-                            curl --fail http://localhost:5000
-
-                            echo "🔍 Frontend check"
-                            curl --fail http://localhost
-                        '
-                        """
-                        sleep 5
-                    }
-                }
-            }
-        }
+       
     }
 
     post {
-        success {
-            echo "✅ Deployment successful (clean code + clean images)"
+        always {
+            echo '🧽 Pruning unused Docker resources'
+            sh 'docker system prune -af || true'
         }
-
+        success {
+            echo '✅ Frontend & Backend deployed and tested successfully'
+        }
         failure {
-            echo "❌ Deployment failed — check Jenkins logs"
+            echo '❌ Pipeline failed – check logs'
         }
     }
 }
