@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies (NO MySQL server)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -17,8 +17,11 @@ RUN pip install --no-cache-dir --upgrade pip==24.2 \
 # Copy backend code
 COPY . .
 
+# Download RDS CA bundle inside container
+RUN curl -o /app/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+
 # Expose Flask port
 EXPOSE 5000
 
-# Start Flask app only
+# Start Flask app
 CMD ["python", "app.py"]
