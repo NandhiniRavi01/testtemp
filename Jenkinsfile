@@ -3,11 +3,9 @@ pipeline {
 
     environment {
         COMPOSE_PROJECT_NAME = "email-app"
-        BACKEND_CONTAINER    = "email-backend"
-        FRONTEND_CONTAINER   = "frontend-app"
 
-        VM_USER = "ubuntu"
-        VM_HOST = "13.221.38.3"
+        VM_USER    = "ubuntu"
+        VM_HOST    = "13.221.38.3"
         VM_APP_DIR = "/home/ubuntu/email-main"
     }
 
@@ -18,42 +16,59 @@ pipeline {
 
     stages {
 
-        /* ---------------------------------------------------------
-         * 1. CHECKOUT CODE IN JENKINS (FROM GITHUB)
-         * --------------------------------------------------------- */
+        /* -----------------------------
+         * 1. Checkout Code
+         * ----------------------------- */
         stage('Checkout Code') {
             steps {
-                echo "📥 Checking out code from GitHub"
+                echo "📥 Checking out source code"
                 checkout scm
             }
         }
 
-        /* ---------------------------------------------------------
-         * 2. TEST SSH CONNECTION
-         * --------------------------------------------------------- */
+        /* -----------------------------
+         * 2. Test SSH Connection
+         * ----------------------------- */
         stage('Test SSH Connection') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "✅ SSH Connection OK"
+                        echo "✅ SSH connected"
                         hostname
                         whoami
-                        uptime
+                        docker --version
                     '
                     """
                 }
             }
         }
 
-        /* ---------------------------------------------------------
-         * 3. COPY CODE TO VM
-         * --------------------------------------------------------- */
-        stage('Copy Code to VM') {
+        /* -----------------------------
+         * 3. Remove Old Code on VM
+         * ----------------------------- */
+        stage('Remove Old Code on VM') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
-                    rsync -avz --delete \
+                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
+                        echo "🧹 Removing old application code"
+                        rm -rf ${VM_APP_DIR}
+                        mkdir -p ${VM_APP_DIR}
+                    '
+                    """
+                }
+            }
+        }
+
+        /* -----------------------------
+         * 4. Copy Fresh Code to VM
+         * ----------------------------- */
+        stage('Copy Fresh Code to VM') {
+            steps {
+                sshagent(['aws-email-vm-ssh']) {
+                    sh """
+                    rsync -avz \
                         --exclude='.git' \
                         --exclude='node_modules' \
                         --exclude='__pycache__' \
@@ -63,32 +78,36 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 4. VERIFY DOCKER & COMPOSE
-         * --------------------------------------------------------- */
-        stage('Verify Docker & Compose') {
+        /* -----------------------------
+         * 5. Stop & Remove Old Containers + Images
+         * ----------------------------- */
+        stage('Cleanup Containers & Images') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        docker --version
-                        docker compose version || docker-compose --version
+                        cd ${VM_APP_DIR}
+                        echo "🧹 Stopping containers and removing images"
+                        docker compose down --rmi all --volumes --remove-orphans || true
                     '
                     """
                 }
             }
         }
 
-        /* ---------------------------------------------------------
-         * 5. BUILD & RUN DOCKER COMPOSE
-         * --------------------------------------------------------- */
-        stage('Build & Run Docker Compose') {
+        /* -----------------------------
+         * 6. Build & Deploy
+         * ----------------------------- */
+        stage('Build & Deploy') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
-                        docker compose build
+                        echo "🐳 Building fresh images"
+                        docker compose build --no-cache
+
+                        echo "🚀 Starting containers"
                         docker compose up -d
                     '
                     """
@@ -96,16 +115,20 @@ pipeline {
             }
         }
 
-        /* ---------------------------------------------------------
-         * 6. WAIT FOR BACKEND TO BE READY
-         * --------------------------------------------------------- */
-        stage('Wait for Backend') {
+        /* -----------------------------
+         * 7. Verify Services
+         * ----------------------------- */
+        stage('Verify Services') {
             steps {
                 sshagent(['aws-email-vm-ssh']) {
                     retry(5) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                            curl --fail --max-time 5 http://${VM_HOST}:5000
+                            echo "🔍 Backend check"
+                            curl --fail http://localhost:5000
+
+                            echo "🔍 Frontend check"
+                            curl --fail http://localhost
                         '
                         """
                         sleep 5
@@ -113,45 +136,15 @@ pipeline {
                 }
             }
         }
-
-        /* ---------------------------------------------------------
-         * 7. TEST SERVICES
-         * --------------------------------------------------------- */
-        stage('Test Services') {
-            steps {
-                sshagent(['aws-email-vm-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                        echo "🔍 Backend test"
-                        curl --fail --max-time 5 http://${VM_HOST}:5000
-
-                        echo "🔍 Frontend test"
-                        curl --fail --max-time 5 http://${VM_HOST}
-                    '
-                    """
-                }
-            }
-        }
-
-    } // end stages
+    }
 
     post {
-        always {
-            sshagent(['aws-email-vm-ssh']) {
-                sh """
-                ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
-                    docker system prune -af || true
-                '
-                """
-            }
-        }
-
         success {
-            echo '✅ Deployment successful (Jenkins → VM)'
+            echo "✅ Deployment successful (clean code + clean images)"
         }
 
         failure {
-            echo '❌ Deployment failed – check logs'
+            echo "❌ Deployment failed — check Jenkins logs"
         }
     }
 }
