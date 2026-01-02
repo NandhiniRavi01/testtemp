@@ -2,12 +2,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies + MySQL 8 client + build tools
-RUN apt-get update && apt-get install -y wget lsb-release gnupg build-essential curl \
-    && wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb \
-    && DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config_0.8.30-1_all.deb \
-    && apt-get update \
-    && apt-get install -y mysql-client \
+# Install dependencies (no MySQL CLI)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
     && curl -o /etc/ssl/certs/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
     && chmod 644 /etc/ssl/certs/rds-ca.pem \
     && rm -rf /var/lib/apt/lists/*
@@ -17,7 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip==24.2 \
     && pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# Copy backend code
 COPY . .
 
 # Expose Flask port
