@@ -18,10 +18,8 @@ RUN pip install --no-cache-dir --upgrade pip==24.2 \
 COPY . .
 
 # Download RDS CA bundle inside the container
-RUN curl -o /app/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
-
-# Ensure proper permissions
-RUN chmod 644 /app/rds-ca.pem
+RUN curl -o /app/rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
+    && chmod 644 /app/rds-ca.pem
 
 # Expose Flask port
 EXPOSE 5000
