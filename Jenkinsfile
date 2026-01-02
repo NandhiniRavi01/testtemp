@@ -37,6 +37,7 @@ pipeline {
                         hostname
                         whoami
                         docker --version
+                        docker compose version
                     '
                     """
                 }
@@ -86,7 +87,7 @@ pipeline {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
-                        echo "🧹 Stopping containers and removing images"
+                        echo "🧹 Stopping containers and removing old images"
                         docker compose down --rmi all --volumes --remove-orphans || true
                     '
                     """
@@ -103,14 +104,14 @@ pipeline {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                         cd ${VM_APP_DIR}
-                        echo "🐳 Building fresh images (no cache)"
-                        docker compose build --no-cache backend
-
-                        echo "📄 Verifying RDS CA bundle exists inside image"
-                        docker run --rm backend ls -l /app/rds-ca.pem
+                        echo "🐳 Building fresh backend image with CA bundle"
+                        docker compose build --no-cache email-backend
 
                         echo "🚀 Starting containers"
                         docker compose up -d
+
+                        echo "📄 Verifying RDS CA bundle exists inside container"
+                        docker exec email-backend ls -l /etc/ssl/certs/rds-ca.pem || true
                     '
                     """
                 }
@@ -142,7 +143,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment successful (clean code + clean images + SSL CA bundled)"
+            echo "✅ Deployment successful (clean code + clean images + CA bundle)"
         }
 
         failure {
