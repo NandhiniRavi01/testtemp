@@ -35,7 +35,7 @@ function LoginPage({ onLogin }) {
 
     try {
       const endpoint = isLogin ? "auth/login" : "auth/register";
-      const response = await fetch(`https://65.1.129.37/${endpoint}`, {
+      const response = await fetch(`https://65.1.129.37:5000/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,7 +71,7 @@ function LoginPage({ onLogin }) {
     setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch("https://65.1.129.37/auth/forgot-password", {
+      const response = await fetch("https://65.1.129.37:5000/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,7 +107,7 @@ function LoginPage({ onLogin }) {
     setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch("https://65.1.129.37/auth/reset-password", {
+      const response = await fetch("https://65.1.129.37:5000/auth/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
