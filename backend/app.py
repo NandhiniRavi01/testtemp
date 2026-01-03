@@ -23,6 +23,7 @@ def create_app():
             "http://65.1.129.37:3000",
             "http://65.1.129.37:8000",
             "http://65.1.129.37:5000",
+            "http://65.1.129.37",
         ],
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
