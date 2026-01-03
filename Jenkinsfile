@@ -128,10 +128,11 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} '
                             echo "🔍 Backend check"
-                            curl --fail http://localhost:5000
+                            curl --fail http://65.1.129.37:5000
 
                             echo "🔍 Frontend check"
-                            curl --fail http://localhost
+                            curl --fail http://65.1.129.37
+                            
                         '
                         """
                         sleep 5
