@@ -62,7 +62,7 @@ function AutoEmailTab() {
     formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("https://emailagent.cubegtp.com/upload-templates", {
+      const res = await fetch("http://65.1.129.37:5000/upload-templates", {
         method: "POST",
         body: formData,
       });
@@ -163,7 +163,7 @@ function AutoEmailTab() {
 
     setLoading({ ...loading, generating: true });
     try {
-      const res = await fetch("https://emailagent.cubegtp.com/generate-content", {
+      const res = await fetch("http://65.1.129.37:5000/generate-content", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,7 +202,7 @@ function AutoEmailTab() {
       
       // Also clear on the backend
       try {
-        await fetch("https://emailagent.cubegtp.com/update-content", {
+        await fetch("http://65.1.129.37:5000/update-content", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -218,7 +218,7 @@ function AutoEmailTab() {
   // Update email content on the backend
   const updateEmailContent = async () => {
     try {
-      const res = await fetch("https://emailagent.cubegtp.com/update-content", {
+      const res = await fetch("http://65.1.129.37:5000/update-content", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,7 +247,7 @@ function AutoEmailTab() {
         setEmailContent(JSON.parse(savedContent));
       }
 
-      const res = await fetch("https://emailagent.cubegtp.com/get-content");
+      const res = await fetch("http://65.1.129.37:5000/get-content");
       const data = await res.json();
 
       if (res.ok && data.subject) {
@@ -271,7 +271,7 @@ function AutoEmailTab() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("https://emailagent.cubegtp.com/preview", {
+      const res = await fetch("http://65.1.129.37:5000/preview", {
         method: "POST",
         body: formData,
       });
@@ -337,7 +337,7 @@ function AutoEmailTab() {
     });
 
     try {
-      const res = await fetch("https://emailagent.cubegtp.com/upload", {
+      const res = await fetch("http://65.1.129.37:5000/upload", {
         method: "POST",
         body: formData,
       });
@@ -363,7 +363,7 @@ function AutoEmailTab() {
     if (sending) {
       interval = setInterval(async () => {
         try {
-          const res = await fetch("https://emailagent.cubegtp.com/progress");
+          const res = await fetch("http://65.1.129.37:5000/progress");
           const data = await res.json();
           setProgress(data);
 
