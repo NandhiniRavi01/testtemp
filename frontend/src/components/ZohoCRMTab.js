@@ -64,7 +64,7 @@ function ZohoCRMTab() {
     }
 
     try {
-      const res = await fetch("https://65.1.129.37:5000/save-zoho-credentials", {
+      const res = await fetch("http://65.1.129.37:5000/save-zoho-credentials", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,7 +92,7 @@ function ZohoCRMTab() {
   // Get Zoho status
   const getZohoStatus = async () => {
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-status");
+      const res = await fetch("http://65.1.129.37:5000/zoho-status");
       const data = await res.json();
       
       if (res.ok) {
@@ -116,7 +116,7 @@ function ZohoCRMTab() {
   // Get Zoho fields
   const getZohoFields = async () => {
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-fields");
+      const res = await fetch("http://65.1.129.37:5000/zoho-fields");
       const data = await res.json();
       
       if (res.ok) {
@@ -134,7 +134,7 @@ function ZohoCRMTab() {
   // Connect to Zoho (open auth URL)
   const connectZoho = async () => {
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-auth");
+      const res = await fetch("http://65.1.129.37:5000/zoho-auth");
       const data = await res.json();
       
       if (res.ok) {
@@ -151,7 +151,7 @@ function ZohoCRMTab() {
   // Helper to generate a single professional reply
   const generateSingleReply = async (reply) => {
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-generate-professional-reply", {
+      const res = await fetch("http://65.1.129.37:5000/zoho-generate-professional-reply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,7 +177,7 @@ function ZohoCRMTab() {
 
     setCheckingReplies(true);
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-check-replies", {
+      const res = await fetch("http://65.1.129.37:5000/zoho-check-replies", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,7 +250,7 @@ function ZohoCRMTab() {
     for (const reply of replies) {
       if (allGeneratedReplies[reply.id] && allGeneratedReplies[reply.id].trim() !== "") {
         try {
-          const res = await fetch("https://65.1.129.37:5000/zoho-send-reply", {
+          const res = await fetch("http://65.1.129.37:5000/zoho-send-reply", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -307,7 +307,7 @@ function ZohoCRMTab() {
     setGeneratingReply(true);
     setSelectedReply(reply);
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-generate-professional-reply", {
+      const res = await fetch("http://65.1.129.37:5000/zoho-generate-professional-reply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -341,7 +341,7 @@ function ZohoCRMTab() {
 
     setSendingReply(true);
     try {
-      const res = await fetch("https://65.1.129.37:5000/zoho-send-reply", {
+      const res = await fetch("http://65.1.129.37:5000/zoho-send-reply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -382,7 +382,7 @@ function ZohoCRMTab() {
   // Download replies as Excel
   const downloadReplies = async () => {
     try {
-      const res = await fetch("https://65.1.129.37:5000/download-replies");
+      const res = await fetch("http://65.1.129.37:5000/download-replies");
       
       if (res.ok) {
         const blob = await res.blob();
@@ -414,7 +414,7 @@ function ZohoCRMTab() {
       setZohoCredentials({
         clientId: "",
         clientSecret: "",
-        redirectUri: "https://yourdomain.com/zoho-callback"
+        redirectUri: "http://yourdomain.com/zoho-callback"
       });
       setZohoStatus({ connected: false, message: "Not connected to Zoho CRM" });
       setConnectionStatus("disconnected");
@@ -541,9 +541,9 @@ function ZohoCRMTab() {
             value={zohoCredentials.redirectUri}
             onChange={(e) => updateCredential('redirectUri', e.target.value)}
             className="content-input"
-            placeholder="https://yourdomain.com/zoho-callback"
+            placeholder="http://yourdomain.com/zoho-callback"
           />
-          <small>This should match the redirect URI configured in your Zoho app (e.g., https://yourdomain.com/zoho-callback)</small>
+          <small>This should match the redirect URI configured in your Zoho app (e.g., http://yourdomain.com/zoho-callback)</small>
         </div>
         
         <div className="button-group">
