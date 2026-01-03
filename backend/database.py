@@ -25,6 +25,8 @@ class Database:
                 user=self.user,
                 password=self.password,
                 database=self.database,
+                ssl_ca="/etc/ssl/certs/rds-ca.pem",   # <- always exists in container
+                ssl_verify_cert=True
                 
             )
             return connection
