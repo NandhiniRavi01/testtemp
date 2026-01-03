@@ -28,7 +28,7 @@ const EmailValidator = () => {
     const fileInputRef = useRef(null);
 
     // THIS WAS THE PROBLEM — NOW FIXED!
-    const API_BASE_URL = 'https://65.1.129.37:5000/api';
+    const API_BASE_URL = 'http://65.1.129.37:5000/api';
 
     // Drag and drop handlers
     const handleDragOver = (e) => {
